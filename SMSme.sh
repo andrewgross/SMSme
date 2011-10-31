@@ -22,14 +22,14 @@ check_environment()
 {
     if ! which sendmail > /dev/null 2>&1
     then
-        echo "[ERROR] sendmail not found!" > &2
+        echo "[ERROR] sendmail not found!" >&2
         exit 1
     fi
 }
 
 send_message()
 {
-    echo "${MESSAGE}’" |  mail -s "SMSme" ${NUMBER}@vtext.com    
+    echo "${MESSAGE}" |  mail -s "SMSme" ${NUMBER}@vtext.com    
 }
 
 
@@ -67,7 +67,7 @@ do
     esac
 done
 
-
+send_message
 
 
 
