@@ -15,6 +15,7 @@ OPTIONS:
                 Ex: -n "5551234567"
 
 EOF
+exit 1
 }
 
 
@@ -37,11 +38,7 @@ check_environment
 
 # Minimum number of arguments includes switches, like -h
 MIN_ARGS=2
-if [ $# -lt ${MIN_ARGS} ]
-then
-    usage
-    exit 1
-fi
+[ $# -lt ${MIN_ARGS} ] && usage
 
 while getopts “hn:m:” OPTION
 do
@@ -49,7 +46,6 @@ do
     h)
         # Show help information
         usage
-        exit 1
         ;;
     n)
         # Set number passed in
@@ -62,7 +58,6 @@ do
     ?)
         # Handle uncaught parameters
         usage
-        exit 1
         ;;
     esac
 done
