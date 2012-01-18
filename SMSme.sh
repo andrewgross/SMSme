@@ -1,6 +1,7 @@
 #!/bin/bash
 
-init(){
+init()
+{
     
     providers[1]='"Verizon": "vtext.com"'
     providers[2]='"ATT": "txt.att.net"'
@@ -22,8 +23,10 @@ OPTIONS:
                 Ex: -m "The job has finished!"
     -n      Phone Number (No delimiters)         
                 Ex: -n "5551234567"
-    -p      Cell Phone Provider (Leave empty for a list)
+    -p      Cell Phone Provider
                 Ex: Verizon
+    -l      List Known Providers
+    -t      Test Mode (No messages sent)
                 
 EOF
 exit 1
@@ -32,9 +35,10 @@ exit 1
 
 check_environment()
 {
-    if ! which sendmail > /dev/null 2>&1
+    if [ -z $(compgen -c | grep -x mail) ]
     then
-        echo "[ERROR] sendmail not found!" >&2
+        echo "[ERROR] mail not found!" >&2
+        echo "[ERROR] is sendmail not installed or configured?" >&2
         exit 1
     fi
 }
@@ -52,20 +56,30 @@ list_providers()
 get_provider()
 {    
     IFS=$','
-    [ ! -z "$SMS_PROVIDER_ADDRESS" ] && export SMS_PROVIDER_ADDRESS && return 0
+    [ ! -z "${SMS_PROVIDER_ADDRESS}" ] && export SMS_PROVIDER_ADDRESS && return 0
     for provider in ${providers[@]}
     do
-        # Check for a preset variable before looping     
+        # This trims all quotes, even escaped ones.
         SMS_PROVIDER_ADDRESS=$(echo "${provider}" | grep -i ${PROVIDER_NAME} | awk '{print $2}' | tr -d \" )       
-        [ ! -z "$SMS_PROVIDER_ADDRESS" ] && export SMS_PROVIDER_ADDRESS && return 0
+        [ ! -z "${SMS_PROVIDER_ADDRESS}" ] && export SMS_PROVIDER_ADDRESS && return 0
     done
     list_providers
 }
 
 send_message()
 {
-    echo "${MESSAGE}" |  mail -s "SMSme" ${NUMBER}@${SMS_PROVIDER_ADDRESS}   
+    if [[ "${TEST}" != "true" ]] ; then
+        echo "${MESSAGE}" |  mail -s "SMSme" ${NUMBER}@${SMS_PROVIDER_ADDRESS}   
+    else
+        echo "[DEBUG] Message:      ${MESSAGE}"
+        echo "[DEBUG] Number:       ${NUMBER}"
+        echo "[DEBUG] Provider:     ${SMS_PROVIDER_ADDRESS}"
+        echo "[DEBUG] Command:      echo \"${MESSAGE}\" |  mail -s \"SMSme\" ${NUMBER}@${SMS_PROVIDER_ADDRESS}"
+    fi
 }
+
+
+
 
 # Minimum number of arguments includes switches, like -h
 MIN_ARGS=1
@@ -74,7 +88,7 @@ MIN_ARGS=1
 declare -a providers
 init
 
-while getopts “hn:n:m:p:l” OPTION
+while getopts “hn:n:m:p:lt” OPTION
 do
     case ${OPTION} in
     h)
@@ -94,6 +108,9 @@ do
         ;;
     l)  # List providers
         list_providers
+        ;;
+    t)  # Set test mode
+        TEST=true
         ;;
     ?)
         # Handle uncaught parameters
